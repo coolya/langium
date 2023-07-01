@@ -4,14 +4,15 @@
  * terms of the MIT License, which is available in the project root.
  ******************************************************************************/
 
-import type { Scope } from '../../references/scope-provider';
+import type { Scope } from '../../references/scope';
 import type { LangiumServices } from '../../services';
 import type { AstNode, AstNodeDescription, ReferenceInfo } from '../../syntax-tree';
 import type { Stream } from '../../utils/stream';
 import type { AstNodeLocator } from '../../workspace/ast-node-locator';
 import type { DocumentSegment, LangiumDocument, PrecomputedScopes } from '../../workspace/documents';
+import { EMPTY_SCOPE, MapScope } from '../../references/scope';
 import { DefaultScopeComputation } from '../../references/scope-computation';
-import { DefaultScopeProvider, EMPTY_SCOPE, StreamScope } from '../../references/scope-provider';
+import { DefaultScopeProvider } from '../../references/scope-provider';
 import { findRootNode, getContainerOfType, getDocument, streamAllContents } from '../../utils/ast-util';
 import { toDocumentSegment } from '../../utils/cst-util';
 import { stream } from '../../utils/stream';
@@ -59,12 +60,12 @@ export class LangiumGrammarScopeProvider extends DefaultScopeProvider {
             return EMPTY_SCOPE;
         }
         const importedUris = stream(grammar.imports).map(resolveImportUri).nonNullable();
-        let importedElements = this.indexManager.allElements(referenceType)
+        let importedElements = this.indexManager.globalScope(referenceType).getAllElements()
             .filter(des => importedUris.some(importedUri => equalURI(des.documentUri, importedUri)));
         if (referenceType === AbstractType) {
             importedElements = importedElements.filter(des => des.type === Interface || des.type === Type);
         }
-        return new StreamScope(importedElements);
+        return new MapScope(importedElements);
     }
 
 }
